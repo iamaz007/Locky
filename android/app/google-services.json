@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "215015734285",
+    "project_id": "any-where-lock",
+    "storage_bucket": "any-where-lock.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:215015734285:android:64e63915f11a413cc4a944",
+        "android_client_info": {
+          "package_name": "com.example.any_where_lock"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "215015734285-77lhmge2b9mat8tv031j9ulorv98l1ah.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAGAGCevyPZXkqTY4uOsTYyYBFUwcyFJik"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "215015734285-77lhmge2b9mat8tv031j9ulorv98l1ah.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
