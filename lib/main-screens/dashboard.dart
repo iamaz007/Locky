@@ -1,3 +1,4 @@
+import 'package:any_where_lock/main-screens/analysis.dart';
 import 'package:any_where_lock/main-screens/dashboard_components/utils.dart';
 import 'package:any_where_lock/main-screens/profile_screen.dart';
 import 'package:any_where_lock/main-screens/user-in-out-logs.dart';
@@ -8,7 +9,7 @@ import 'package:any_where_lock/values/ui-strings.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
-
+import 'package:charts_flutter/flutter.dart' as charts;
 import 'dashboard_components/custom_clipper.dart';
 
 class DashDemo extends StatefulWidget {
@@ -17,10 +18,12 @@ class DashDemo extends StatefulWidget {
   _DashDemoState createState() => _DashDemoState();
 }
 
+String userKey = "cv93121";
+
 class _DashDemoState extends State<DashDemo> {
   Lock lk = new Lock();
-  String userKey = "cv93121";
-  String lastActivityMessage = 'AZ unloocked the door';
+
+  String lastActivityMessage = 'loading...';
   void doorAction() async {
     var res = await lk.authenticate();
     print(res);
@@ -297,8 +300,11 @@ Widget connectedStatusText() {
 
 Widget locationCard(title, cardBgColor, flag, country, context) {
   return InkWell(
-    onTap: () {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => UserInOutLogs()));
+    onTap: () async {
+      await getLogDetails(context);
+      // print(res);
+      // Navigator.push(context, MaterialPageRoute(builder: (context) => UserInOutLogs()));
+      // Navigator.push(context, MaterialPageRoute(builder: (context) => VisualAndAnalysis(_createSampleData())));
     },
     child: Container(
       margin: EdgeInsets.symmetric(vertical: 8, horizontal: 32),
@@ -348,4 +354,131 @@ Widget locationCard(title, cardBgColor, flag, country, context) {
       ),
     ),
   );
+}
+
+getLogDetails(BuildContext context) {
+  Map usersCount = new Map();
+  FirebaseDatabase.instance.reference().child('Home').child(userKey).child('logs').once().then((DataSnapshot snapshot) {
+    var origdata = snapshot.value;
+    List days = origdata.keys.toList();
+    for (var i = 0; i < days.length; i++) {
+      List times = origdata[days[i]].keys.toList();
+      for (var j = 0; j < times.length; j++) {
+        if (origdata[days[i]][times[j]]['activity'] == 'person_in') {
+          String userId = origdata[days[i]][times[j]]['user'].toString();
+          List date = days[i].split('_');
+
+          if (usersCount[userId] == null) {
+            usersCount[userId] = [];
+          } else {
+            usersCount[userId].add({'date': "${date[0] + "-" + date[1] + "-" + date[2]}"});
+          }
+        }
+      }
+    }
+    loadLogDetails(usersCount, context);
+  });
+}
+
+loadLogDetails(var dataR, BuildContext context) {
+  List<charts.Series<OrdinalSales, String>> activityIn = new List();
+  List userIds = dataR.keys.toList();
+
+  for (var i = 0; i < userIds.length; i++) {
+    List dateExist = [];
+
+    for (var j = 0; j < dataR[userIds[i]].length; j++) {
+      if (dateExist.length <= 0) {
+        dateExist.add({
+          'date': dataR[userIds[i]][j]['date'],
+          'totalActivity': 1,
+        });
+      } else {
+        bool found = false;
+        int foundedIndex = 0;
+        for (var k = 0; k < dateExist.length; k++) {
+          if (dateExist[k]['date'] == dataR[userIds[i]][j]['date']) {
+            found = true;
+            foundedIndex = k;
+            break;
+          }
+        }
+        if (found) {
+          dateExist[foundedIndex]['totalActivity'] = dateExist[foundedIndex]['totalActivity'] + 1;
+        } else {
+          dateExist.add({
+            'date': dataR[userIds[i]][j]['date'],
+            'totalActivity': 1,
+          });
+        }
+      }
+    }
+    // adding in activity_in
+    List<OrdinalSales> temp = [];
+    for (var l = 0; l < dateExist.length; l++) {
+      temp.add(OrdinalSales(dateExist[l]['date'], dateExist[l]['totalActivity']));
+    }
+    activityIn.add(new charts.Series<OrdinalSales, String>(
+      id: userIds[i].toString(),
+      domainFn: (OrdinalSales sales, _) => sales.date,
+      measureFn: (OrdinalSales sales, _) => sales.totalActivity,
+      data: temp,
+    ));
+  }
+
+  // print(temp);
+  Navigator.push(context, MaterialPageRoute(builder: (context) => VisualAndAnalysis(activityIn)));
+}
+
+/// Create series list with multiple series
+List<charts.Series<OrdinalSales, String>> _createSampleData() {
+  final desktopSalesData = [
+    new OrdinalSales('2014', 5),
+    new OrdinalSales('2015', 25),
+    new OrdinalSales('2016', 100),
+    new OrdinalSales('2017', 75),
+  ];
+
+  final tableSalesData = [
+    new OrdinalSales('2014', 25),
+    new OrdinalSales('2015', 50),
+    new OrdinalSales('2016', 10),
+    new OrdinalSales('2017', 20),
+  ];
+
+  final mobileSalesData = [
+    new OrdinalSales('2014', 10),
+    new OrdinalSales('2015', 15),
+    new OrdinalSales('2016', 50),
+    new OrdinalSales('2017', 45),
+  ];
+
+  // return [
+  //   new charts.Series<OrdinalSales, String>(
+  //     id: 'Desktop',
+  //     domainFn: (OrdinalSales sales, _) => sales.year,
+  //     measureFn: (OrdinalSales sales, _) => sales.sales,
+  //     data: desktopSalesData,
+  //   ),
+  //   new charts.Series<OrdinalSales, String>(
+  //     id: 'Tablet',
+  //     domainFn: (OrdinalSales sales, _) => sales.year,
+  //     measureFn: (OrdinalSales sales, _) => sales.sales,
+  //     data: tableSalesData,
+  //   ),
+  //   new charts.Series<OrdinalSales, String>(
+  //     id: 'Mobile',
+  //     domainFn: (OrdinalSales sales, _) => sales.year,
+  //     measureFn: (OrdinalSales sales, _) => sales.sales,
+  //     data: mobileSalesData,
+  //   ),
+  // ];
+}
+
+/// Sample ordinal data type.
+class OrdinalSales {
+  final String date;
+  final int totalActivity;
+
+  OrdinalSales(this.date, this.totalActivity);
 }
