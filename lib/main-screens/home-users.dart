@@ -184,14 +184,14 @@ class _HomeUsersState extends State<HomeUsers> {
         content: Column(
           children: <Widget>[
             TextField(
-              controller: updateUsername,
+              controller: updateEmail,
               decoration: InputDecoration(
                 icon: Icon(Icons.email),
                 labelText: 'Email',
               ),
             ),
             TextField(
-              controller: updateEmail,
+              controller: updateUsername,
               decoration: InputDecoration(
                 icon: Icon(Icons.account_circle),
                 labelText: 'User Name',

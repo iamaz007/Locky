@@ -20,6 +20,7 @@ class DashDemo extends StatefulWidget {
 class _DashDemoState extends State<DashDemo> {
   Lock lk = new Lock();
   String userKey = "cv93121";
+  String lastActivityMessage = 'AZ unloocked the door';
   void doorAction() async {
     var res = await lk.authenticate();
     print(res);
@@ -68,8 +69,10 @@ class _DashDemoState extends State<DashDemo> {
 
   void initState() {
     readDoorStatus();
+    getRecentRecords();
     super.initState();
   }
+
   @override
   void dispose() {
     super.dispose();
@@ -86,7 +89,41 @@ class _DashDemoState extends State<DashDemo> {
               alignment: Alignment.topCenter,
               overflow: Overflow.visible,
               children: <Widget>[
-                upperCurvedContainer(context),
+                ClipPath(
+                  clipper: MyCustomClipper(),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 32, vertical: 36),
+                    height: 320,
+                    width: MediaQuery.of(context).size.width,
+                    decoration: BoxDecoration(
+                      gradient: curveGradient,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: <Widget>[
+                        _topRow(context),
+                        Text(TextStrings.appName, style: vpnStyle),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: <Widget>[
+                            FlatButton(
+                                onPressed: () => {getRecentRecords()},
+                                child: Icon(
+                                  Icons.refresh,
+                                  size: 30,
+                                  color: Colors.white,
+                                )),
+                            Text(
+                              'Download\n32 mb/s',
+                              style: txtSpeedStyle,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 Container(
                   child: Positioned(
                     bottom: -screenWidth * 0.36,
@@ -150,35 +187,48 @@ class _DashDemoState extends State<DashDemo> {
             connectedStatusText(),
             SizedBox(height: 20),
             // We need to pass parameters to this widget
-            locationCard('Last Activity', Colors.transparent, kenyaFlagUrl, 'AZ unloocked the door', context),
+            locationCard('Last Activity', Colors.transparent, kenyaFlagUrl, lastActivityMessage, context),
 
             SizedBox(height: 20),
           ],
         ));
   }
-}
 
-Widget upperCurvedContainer(BuildContext context) {
-  return ClipPath(
-    clipper: MyCustomClipper(),
-    child: Container(
-      padding: EdgeInsets.symmetric(horizontal: 32, vertical: 36),
-      height: 320,
-      width: MediaQuery.of(context).size.width,
-      decoration: BoxDecoration(
-        gradient: curveGradient,
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
-          _topRow(context),
-          Text(TextStrings.appName, style: vpnStyle),
-          _bottomRow(),
-        ],
-      ),
-    ),
-  );
+  List dateKeys = new List();
+  getRecentRecords() {
+    FirebaseDatabase.instance.reference().child('Home').child(userKey).child('logs').once().then((DataSnapshot snapshot) {
+      dateKeys = snapshot.value.keys.toList();
+      getRecentActivity(snapshot.value, dateKeys, snapshot.value[dateKeys[dateKeys.length - 1]].keys.toList());
+    });
+  }
+
+  getRecentActivity(var data, List days, List times) {
+    // print(data);
+    // print(times);
+    times.sort((a, b) {
+      return a.toString().compareTo(b.toString());
+    });
+    print(times);
+    String lastTime = times[times.length - 1];
+
+    if (lastTime != '') {
+      var userId = data[days[days.length - 1]][lastTime]['user'];
+
+      FirebaseDatabase.instance.reference().child('Users').child(userKey).child(userId.toString()).once().then((DataSnapshot snapshot) {
+        var userInfo = snapshot.value;
+        if (data[days[days.length - 1]][lastTime]['activity'] == 'person_out') {
+          setState(() {
+            lastActivityMessage = "${userInfo['name']} close the door at $lastTime";
+          });
+        } else {
+          setState(() {
+            lastActivityMessage = "${userInfo['name']} opened the door at $lastTime";
+          });
+        }
+      });
+    }
+    // print(lastTime);
+  }
 }
 
 Widget _topRow(BuildContext context) {
@@ -228,22 +278,6 @@ Widget _topRow(BuildContext context) {
   );
 }
 
-Widget _bottomRow() {
-  return Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: <Widget>[
-      Text(
-        'Upload\n546 kb/s',
-        style: txtSpeedStyle,
-      ),
-      Text(
-        'Download\n32 mb/s',
-        style: txtSpeedStyle,
-      ),
-    ],
-  );
-}
-
 // Widget circularButtonWidget(BuildContext context, width) {
 //   return
 // }
@@ -263,7 +297,7 @@ Widget connectedStatusText() {
 
 Widget locationCard(title, cardBgColor, flag, country, context) {
   return InkWell(
-    onTap: (){
+    onTap: () {
       Navigator.push(context, MaterialPageRoute(builder: (context) => UserInOutLogs()));
     },
     child: Container(
@@ -288,24 +322,25 @@ Widget locationCard(title, cardBgColor, flag, country, context) {
             ),
             child: Center(
               child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: Colors.transparent,
-                  radius: 20,
-                  backgroundImage: NetworkImage(flag),
-                ),
+                // leading: CircleAvatar(
+                //   backgroundColor: Colors.transparent,
+                //   radius: 20,
+                //   backgroundImage: NetworkImage(flag),
+                // ),
                 title: Text(
                   country,
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 18,
+                    fontSize: 20,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                trailing: Icon(
-                  Icons.refresh,
-                  size: 28,
-                  color: Colors.white70,
-                ),
+                // trailing: Icon(
+                //   Icons.refresh,
+                //   size: 28,
+                //   color: Colors.white70,
+                // ),
               ),
             ),
           )
