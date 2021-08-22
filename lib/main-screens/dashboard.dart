@@ -1,4 +1,5 @@
 import 'package:any_where_lock/main-screens/analysis.dart';
+import 'package:any_where_lock/main-screens/dashboard_components/doorUnlockMethods.dart';
 import 'package:any_where_lock/main-screens/dashboard_components/utils.dart';
 import 'package:any_where_lock/main-screens/profile_screen.dart';
 import 'package:any_where_lock/main-screens/user-in-out-logs.dart';
@@ -21,35 +22,10 @@ class DashDemo extends StatefulWidget {
 String userKey = "cv93121";
 
 class _DashDemoState extends State<DashDemo> {
-  Lock lk = new Lock();
+  
 
   String lastActivityMessage = 'loading...';
-  void doorAction() async {
-    var res = await lk.authenticate();
-    print(res);
-    // print(TextStrings.doorUnlocked);
-    // print(UiStrings.doorBtnOpacity);
-
-    if (res == 1) {
-      if (TextStrings.doorUnlocked == true) {
-        setState(() {
-          TextStrings.doorUnlocked = false;
-          UiStrings.doorBtnOpacity = 0;
-          TextStrings.doorStatus = "Locked";
-
-          FirebaseDatabase.instance.reference().child("Home").child(userKey).update({"door1": 0});
-        });
-      } else {
-        setState(() {
-          TextStrings.doorUnlocked = true;
-          UiStrings.doorBtnOpacity = 0.7;
-          TextStrings.doorStatus = "Unlocked";
-
-          FirebaseDatabase.instance.reference().child("Home").child(userKey).update({"door1": 1});
-        });
-      }
-    }
-  }
+  
 
   void readDoorStatus() async {
     final FirebaseApp app = await Firebase.initializeApp();
@@ -136,7 +112,12 @@ class _DashDemoState extends State<DashDemo> {
                         InkWell(
                           splashColor: Colors.transparent,
                           onTap: () {
-                            doorAction();
+                            // doorAction();
+                            showDialog(
+                                context: context,
+                                builder: (_) {
+                                  return DoorUnlockMethods();
+                                });
                           },
                           child: Container(
                             height: screenWidth * 0.51,
@@ -184,7 +165,12 @@ class _DashDemoState extends State<DashDemo> {
             InkWell(
                 splashColor: Colors.transparent,
                 onTap: () {
-                  doorAction();
+                  // doorAction();
+                  showDialog(
+                      context: context,
+                      builder: (_) {
+                        return DoorUnlockMethods();
+                      });
                 },
                 child: SizedBox(height: screenWidth * 0.40)),
             connectedStatusText(),

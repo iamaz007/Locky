@@ -1,3 +1,5 @@
+import 'package:any_where_lock/models/lock.dart';
+
 class TextStrings {
   static String appName = "Locky";
   static String emailField = "Email";
@@ -16,3 +18,4 @@ class TextStrings {
   static String userEmail = '';
   static String userKey = '';
 }
+Lock lk = new Lock();

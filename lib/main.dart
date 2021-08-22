@@ -47,7 +47,9 @@ class _MyAppState extends State<MyApp> {
       TextStrings.userEmail = data[0];
       TextStrings.userKey = data[1];
       
-      userLogined = true;
+      setState(() {
+        userLogined = true;
+      });
     }
   }
 }

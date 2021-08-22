@@ -41,6 +41,7 @@ dependencies:
   firebase_dynamic_links:
   shared_preferences:
   charts_flutter:
+  speech_to_text: 
 
 dev_dependencies:
   flutter_test:
